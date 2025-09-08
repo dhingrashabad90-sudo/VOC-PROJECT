@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>VOC Trade Network Timeline (Animated)</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  <style>
+    body { margin:0; padding:0; }
+    #map { position:absolute; top:0; bottom:0; width:100%; height:100%; }
+    #timeline {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.9);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="timeline">Click to start VOC Expansion →</div>
+  <script>
+    // ✅ Your Mapbox access token
+    mapboxgl.accessToken = 'pk.eyJ1IjoiZGhpbmdyYXNoYWJhZCIsImEiOiJjbWZhbWN0MHUwc2JkMm5wdzFsN3IzZjIxIn0.vR0DQKj3yzKc-HOAs-6pag';
+
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/light-v11',
+      center: [50, 5], // focus wider: Europe + Asia
+      zoom: 2.5
+    });
+
+    map.addControl(new mapboxgl.NavigationControl());
+
+    // VOC hubs
+    const vocLocations = [
+      { year: 1602, coords: [4.9041, 52.3676], title: "Amsterdam", desc: "VOC founded here in 1602. Financial and administrative center." },
+      { year: 1619, coords: [106.8456, -6.2088], title: "Batavia (Jakarta)", desc: "Founded in 1619 as VOC HQ in Asia." },
+      { year: 1621, coords: [129.5, -4.5], title: "Banda Islands", desc: "Nutmeg monopoly enforced violently in 1621 (Banda Massacre)." },
+      { year: 1624, coords: [121.0, 23.5], title: "Taiwan (Formosa)", desc: "Dutch foothold 1624–1662, expelled by Koxinga." },
+      { year: 1641, coords: [102.25, 2.19], title: "Malacca", desc: "Captured from Portuguese in 1641, vital trade strait." },
+      { year: 1650, coords: [80.7718, 7.8731], title: "Ceylon (Sri Lanka)", desc: "Dutch seized cinnamon trade mid-1600s." },
+      { year: 1641, coords: [129.8737, 32.7448], title: "Nagasaki (Dejima)", desc: "1641–1854: Dutch only Europeans allowed to trade with Japan." },
+      { year: 1652, coords: [18.4241, -33.9249], title: "Cape of Good Hope", desc: "1652: VOC supply station for Asia route." }
+    ];
+
+    // Add markers
+    vocLocations.forEach(loc => {
+      new mapboxgl.Marker({ color: 'darkorange' })
+        .setLngLat(loc.coords)
+        .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<h3>${loc.title} (${loc.year})</h3><p>${loc.desc}</p>`))
+        .addTo(map);
+    });
+
+    // Routes in chronological order
+    const routesTimeline = [
+      {
+        year: 1602, coords: [[4.9041, 52.3676],[106.8456, -6.2088]], label: "1602 Amsterdam → Batavia (Jakarta)"
+      },
+      {
+        year: 1621, coords: [[106.8456, -6.2088],[129.5, -4.5]], label: "1621 Batavia → Banda Islands"
+      },
+      {
+        year: 1624, coords: [[106.8456, -6.2088],[121.0, 23.5]], label: "1624 Batavia → Taiwan"
+      },
+      {
+        year: 1641, coords: [[106.8456, -6.2088],[102.25, 2.19]], label: "1641 Batavia → Malacca"
+      },
+      {
+        year: 1650, coords: [[106.8456, -6.2088],[80.7718, 7.8731]], label: "1650s Batavia → Ceylon"
+      },
+      {
+        year: 1641, coords: [[106.8456, -6.2088],[129.8737, 32.7448]], label: "1641 Batavia → Dejima (Japan)"
+      },
+      {
+        year: 1652, coords: [[106.8456, -6.2088],[18.4241, -33.9249]], label: "1652 Batavia → Cape of Good Hope"
+      },
+      {
+        year: 1652, coords: [[18.4241, -33.9249],[4.9041, 52.3676]], label: "1652 Cape of Good Hope → Amsterdam"
+      }
+    ];
+
+    // Function to add one route
+    function addRoute(route, id) {
+      map.addSource(id, {
+        "type": "geojson",
+        "data": {
+          "type": "Feature",
+          "geometry": {
+            "type": "LineString",
+            "coordinates": route.coords
+          }
+        }
+      });
+      map.addLayer({
+        "id": id,
+        "type": "line",
+        "source": id,
+        "layout": { "line-join": "round", "line-cap": "round" },
+        "paint": {
+          "line-color": "#FF4500",
+          "line-width": 3,
+          "line-dasharray": [2,4]
+        }
+      });
+    }
+
+    // Animate routes by timeline
+    map.on('load', () => {
+      let i = 0;
+      document.getElementById("timeline").onclick = () => {
+        if (i < routesTimeline.length) {
+          const r = routesTimeline[i];
+          addRoute(r, "route-" + i);
+          document.getElementById("timeline").innerHTML = "Showing: " + r.label;
+          i++;
+        } else {
+          document.getElementById("timeline").innerHTML = "All VOC routes shown.";
+        }
+      };
+    });
+  </script>
+</body>
+</html>
